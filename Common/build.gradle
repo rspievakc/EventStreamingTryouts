@@ -1,0 +1,24 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id "com.github.davidmc24.gradle.plugin.avro" version "${avroPluginVersion}"
+}
+
+repositories {
+    mavenCentral()
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+apply plugin: 'java'
+
+dependencies {
+    api("org.apache.avro:avro:${avroVersion}") {
+        exclude group: 'org.slf4j', module: 'slf4j-api'
+    }
+}
+
+avro {
+    createSetters = false
+    fieldVisibility = "PRIVATE"
+}

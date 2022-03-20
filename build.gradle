@@ -1,0 +1,76 @@
+plugins {
+    id "com.github.johnrengelman.shadow" version "7.1.2"
+    id "com.adarshr.test-logger" version "3.0.0"
+}
+
+allprojects {
+    repositories {
+        mavenLocal()
+//    maven {
+//        credentials {
+//            username = maven_user
+//            password = maven_password
+//        }
+//        url = custom_maven_url
+//    }
+        mavenCentral()
+        maven { url "https://packages.confluent.io/maven/" }
+    }
+}
+
+subprojects {
+
+    apply plugin: 'java'
+    //apply plugin: 'application'
+    apply plugin: 'com.github.johnrengelman.shadow'
+    apply plugin: "com.adarshr.test-logger"
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+
+         // Lombok
+        annotationProcessor "org.projectlombok:lombok:$lombokVersion"
+        testAnnotationProcessor "org.projectlombok:lombok:$lombokVersion"
+        compileOnly "org.projectlombok:lombok:$lombokVersion"
+        testCompileOnly "org.projectlombok:lombok:$lombokVersion"
+
+        // Logging
+        implementation('ch.qos.logback:logback-classic:1.2.11')
+        implementation('net.logstash.logback:logstash-logback-encoder:7.0.1')
+
+        // Test
+        testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+        testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+        // Test helpers
+        testImplementation 'org.assertj:assertj-core:3.22.0'
+        testImplementation "org.testcontainers:kafka:1.16.3"
+
+    }
+
+    shadowJar {
+        zip64 true
+        mergeServiceFiles()
+    }
+
+    test {
+        testLogging.showStandardStreams = true
+        systemProperty 'MICRONAUT_ENVIRONMENTS', 'nicelogging'
+        useJUnitPlatform {
+            if (System.getProperty("test_containers_feature") == "disabled") {
+                excludeTags 'testcontainers'
+            }
+        }
+
+        testLogging {
+            afterSuite { desc, result ->
+                if (!desc.parent) {
+                    println "\nTest result: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+                }
+            }
+        }
+    }
+
+}
